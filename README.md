@@ -17,6 +17,9 @@ The structure consists of two folders. The first one, ‘01 Models’, where we 
 Figures.R: create output plots
 
 References:
+
 https://vlab.noaa.gov/web/stock-synthesis
+
 https://github.com/r4ss/r4ss
+
 https://pifscstockassessments.github.io/ss3diags/
