@@ -1,6 +1,6 @@
 # R-Code-SS-Hake-Sex
 
-This is the R code to reproduce the models and figures from the manuscript ‘Sex Matters: Investigating the Impact of Sexual Size Dimorphism on Fish Stock Assessment’.
+This is the R code to reproduce the models and figures from the manuscript ‘Investigating the dynamics of sex-structured stock assessment models under sexual size dimorphism’.
 
 The structure consists of two folders. The first one, ‘01 Models’, where we will find the 3 configurations of the Stock Synthesis hake model: Single sex C, Single sex F and Two sex. In the second one, ‘02 Figures’, we will find a script that allows us to make the figures of the article from the 3 models.
 
