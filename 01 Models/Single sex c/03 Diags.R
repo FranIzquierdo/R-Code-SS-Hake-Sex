@@ -3,9 +3,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~
 # Modified 16/02/2025 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~
-# Francisco Izquierdo    #
-# Massimiliano Cardinale #
-#~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 ## Press Ctrl + Shift + O to see the document outline
 
