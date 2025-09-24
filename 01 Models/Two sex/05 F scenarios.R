@@ -3,9 +3,6 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Modified 15/01/2025 #
 #~~~~~~~~~~~~~~~~~~~~~~
-# Francisco Izquierdo #
-# Marta Cousido       #
-#~~~~~~~~~~~~~~~~~~~~~~
 
 ## Press Ctrl + Shift + O to see the document outline
 
