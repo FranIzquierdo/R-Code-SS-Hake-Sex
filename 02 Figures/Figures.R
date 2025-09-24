@@ -3,9 +3,7 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Modified 03/04/2024 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Francisco Izquierdo        #
-# francisco.izqtar@gmail.com #
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 ## Press Ctrl + Shift + O to see the document outline
 
