@@ -1,46 +1,21 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run SS shake model and do r4ss plots #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Modified 16/01/2025 #
+# Modified 12/06/2026 #
 #~~~~~~~~~~~~~~~~~~~~~~
-
+# Francisco Izquierdo #
+#~~~~~~~~~~~~~~~~~~~~~~
 
 ## Press Ctrl + Shift + O to see the document outline
 
-## SS files were setup manually and located in the "base model" folder
+## M0 base model is built below automatically as a fresh copy of "base model".
+## Then the model is run.
 
-# library(devtools)
-# remotes::install_github("r4ss/r4ss")
+## r4ss version to install:
+# install.packages("pak")
+# pak::pkg_install("r4ss/r4ss")
 
-# * M0 base model --------------------------------------------------------------
-
-# New dir
-base_dir <- paste0(getwd(), "/Model/base model/", sep="") 
-new_dir <- paste0(getwd(), "/Model/M0 base model/", sep="") 
-
-# Files to copy
-files_to_copy <- c("control_fixed.ss", "shake_data.ss", "starter.ss", "forecast.ss")
-
-# Create dir if it does not exist
-if (!dir.exists(new_dir)) {
-   dir.create(new_dir)
-   message("Carpeta '", new_dir, "' creada.")
-}
-
-# Copy files
-for (file in files_to_copy) {
-   source_path <- file.path(base_dir, file)  # Ruta completa del archivo origen
-   target_path <- file.path(new_dir, file)  # Ruta completa del archivo destino
-   
-   if (file.exists(source_path)) {
-      file.copy(source_path, target_path)
-      message("Archivo '", file, "' copiado a '", new_dir, "'.")
-   } else {
-      message("Archivo '", file, "' no encontrado en '", base_dir, "'.")
-   }
-}
-
-# Run --------------------------------------------------------------------------
+# Edit here! ------------------------------------------------------------------
 
 rm(list=ls())
 library(r4ss)
@@ -48,15 +23,32 @@ library(r4ss)
 mod_path <- paste0(getwd(), "./Model/M0 base model/", sep="") ## CHANGE name
 dir.create(mod_path) ## check that exists
 
-r4ss::run_SS_models(dirvec = mod_path, model = "ss", exe_in_path = TRUE,
-                    verbose=TRUE, extras = "-nox") ## "-nox" or "-nohess" 
+# Build M0 base model from "base model" and run it -----------------------------
+# M0 base model is a fresh copy of the original "base model" (best jitter).
+# If the model is already run (Report.sso exists) the copy and run are skipped.
+# To re-run the model, delete the folder manually.
+
+base_path <- paste0(getwd(), "./Model/base model/")  ## original (best jitter)
+
+if (file.exists(paste0(mod_path, "Report.sso"))) {
+  message("M0 base model already run -> skipping copy and run.")
+} else {
+  file.copy(paste0(base_path, "starter.ss"),       paste0(mod_path, "starter.ss"),       overwrite = TRUE)
+  file.copy(paste0(base_path, "control_fixed.ss"), paste0(mod_path, "control_fixed.ss"), overwrite = TRUE)
+  file.copy(paste0(base_path, "shake_data.ss"),    paste0(mod_path, "shake_data.ss"),    overwrite = TRUE)
+  file.copy(paste0(base_path, "forecast.ss"),      paste0(mod_path, "forecast.ss"),      overwrite = TRUE)
+  file.copy(paste0(base_path, "ss.par"),           paste0(mod_path, "ss.par"),           overwrite = TRUE)
+  file.copy(paste0(base_path, "ss.exe"),           paste0(mod_path, "ss.exe"),           overwrite = TRUE)
+
+  r4ss::run(dir = mod_path, verbose = TRUE, extras = "-nox", exe = "ss.exe", show_in_console = TRUE) ## "-nox" or "-nohess"
+} 
 
 # r4ss plot --------------------------------------------------------------------
 
 ## Read output
 replist <- SS_output(dir = mod_path, verbose=TRUE, printstats=TRUE)
 
-## Plots r4ss
+## Plot
 SS_plots(replist, pdf=F, png=T, html=T, printfolder = "r4ss plots") ## html
 
 ## Summary plot

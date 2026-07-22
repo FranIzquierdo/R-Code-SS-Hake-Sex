@@ -1,13 +1,13 @@
-#~~~~~~~~~~~~~~~~~~~~~~~
-# Apply ss3diags to SS #
-#~~~~~~~~~~~~~~~~~~~~~~~
-# Modified 16/02/2025 #
+#~~~~~~~~~~~~~~~~~~~~~~~~
+# Apply ss3diags to SS  #
+#~~~~~~~~~~~~~~~~~~~~~~~~
+# Modified 12/06/2026 #
+#~~~~~~~~~~~~~~~~~~~~~~~~~
+# Francisco Izquierdo    #
+# Massimiliano Cardinale #
 #~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 ## Press Ctrl + Shift + O to see the document outline
-
-## Read retro files and make ss3diags plots
 
 #library(devtools)
 #install_github("jabbamodel/ss3diags")
@@ -33,6 +33,11 @@ retroModels <- SSgetoutput(dirvec=file.path(mod_path, "retros",
 ## Reference run
 ss3rep = retroModels[[1]]
 
+## FIX r4ss >= 1.46: el campo 'F_report_basis' se renombro a 'F_std_basis'.
+## ss3diags 1.10.3 lo sigue buscando con el nombre viejo (SSsettingsBratioF,
+## SSdeltaMVLN) -> le mapeamos el nuevo al viejo para que no falle strsplit().
+ss3rep$F_report_basis <- ss3rep$F_std_basis
+
 # ss3diags ---------------------------------------------------------------------
 
 ## Check Data
@@ -45,21 +50,27 @@ dev.print(jpeg,paste0(dirplot,"/DataSetup_",".jpg"), width = 8,
 pdf(paste0(dirplot,"/RunsTestResiduals.pdf"), height = 6.5, width = 11)
 sspar(mfrow=c(2,1),plot.cex = 0.8)
 SSplotRunstest(ss3rep,subplots="cpue",add=T)
+#dev.print(jpeg,paste0(dirplot,"/RunsTestResiduals_cpue.jpg"), 
+#          width = 8, height = 7, res = 300, units = "in")
 dev.off()
 
 ## For length
 pdf(paste0(dirplot,"/RunsTestResiduals.pdf"), height = 6.5, width = 11)
 sspar(mfrow=c(3,3),plot.cex = 0.8)
 SSplotRunstest(ss3rep,subplots="len",add=T)
+#dev.print(jpeg,paste0(dirplot,"/RunsTestResiduals_len.jpg"), 
+#          width = 8, height = 7, res = 300, units = "in")
 dev.off()
 
 ## Check conflict between mean lengths
+
 pdf(paste0(dirplot,"/JointResiduals_.pdf"), height = 6.5, width = 11)
 sspar(mfrow=c(1,2),plot.cex = 0.8)
 SSplotJABBAres(ss3rep,subplots="cpue",add=T)
 SSplotJABBAres(ss3rep,subplots="len",add=T)
+#dev.print(jpeg,paste0(dirplot,"/JointResiduals_.jpg"), 
+#          width = 8, height = 3.5, res = 300, units = "in")
 dev.off()
-
 ## Check starter file
 starter = SSsettingsBratioF(ss3rep)
 
@@ -73,6 +84,8 @@ dev.print(jpeg,paste0(dirplot,"/Kobe_.jpg"), width = 6.5,
 pdf(paste0(dirplot,"/MVLN_TRJ_.pdf"), height = 6.5, width = 11)
 sspar(mfrow=c(3,3),plot.cex = 0.9)
 SSplotEnsemble(mvn$kb,ylabs = mvn$labels,add=T)
+#dev.print(jpeg,paste0(dirplot,"/MVLN_TRJ_.jpg"), width = 8, 
+#          height = 6.5, res = 300, units = "in")
 dev.off()
 
 ## Summarize the list of retroModels
@@ -90,11 +103,13 @@ pdf(paste0(dirplot,"/HCxvalIndex.pdf"), height = 6.5, width = 11)
 sspar(mfrow=c(3,2),plot.cex = 0.9)
 SSplotHCxval(retroSummary,xmin=1953,add=T)
 dev.off()
-
 ## Also test new feature of Hindcast with Cross-Validation for mean length
+
 ## Use new converter fuction SSretroComps()
 hccomps = SSretroComps(retroModels)
 pdf(paste0(dirplot,"/HCxvalLen_.pdf"), height = 6.5, width = 11)
 sspar(mfrow=c(3,3),plot.cex = 0.7)
 SSplotHCxval(hccomps,add=T,subplots = "len",legendloc="topleft")
+#dev.print(jpeg,paste0(dirplot,"/HCxvalLen_.jpg"), width = 8, 
+#         height = 4, res = 300, units = "in")
 dev.off()
