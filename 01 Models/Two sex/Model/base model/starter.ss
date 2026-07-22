@@ -5,7 +5,7 @@
 #
 shake_data.ss #_datfile
 control_fixed.ss #_ctlfile
-0 # 0=use init values in control file; 1=use ss.par
+1 # 0=use init values in control file; 1=use ss.par
 1 #_run_display_detail
 1 #_detailed_age_structure
 0 #_checkup
