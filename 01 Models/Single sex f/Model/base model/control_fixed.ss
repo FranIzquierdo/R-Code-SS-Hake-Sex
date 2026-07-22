@@ -20,7 +20,7 @@
 0 # unused option
 #GPattern month  area  age (for each settlement assignment)
  1 1 1 0
- 1 9 1 0
+ 1 7 1 0
 # 1 4 1 0
 #
 #_Cond 0 # N_movement_definitions goes here if Nareas > 1
