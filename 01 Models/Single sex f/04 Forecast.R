@@ -1,28 +1,19 @@
 #~~~~~~~~~~~~~~~~~~~~~~
 # Perform SS forecast #
 #~~~~~~~~~~~~~~~~~~~~~~
-# Modified 15/01/2025 #
+# Modified 12/06/2026 #
 #~~~~~~~~~~~~~~~~~~~~~~
-                                                                                                 
+# Francisco Izquierdo #
+# Marta Cousido       #
+#~~~~~~~~~~~~~~~~~~~~~#                                                                                                        
 
 ## Press Ctrl + Shift + O to see the document outline
 
-## In this script, we will forecast to F intermediate year (average last 3 years)
-## Moreover, we will forecast the model for different F multiplier values
-## The F multipliers range from 0 to Flim
-
-## SO a forecast folder will be created with multiple forecast F mult files
-
-## Finally, we will get 2 output tables. From table Fmult we can manually get:
-## Equilibrium SSB, F, Rec and Catches for each F multiplier
-
-## Then we are able to find the F multiplier that maximizes catch and plot the yield
-
-# a) Create forecast ----------------------------------------------------------
+# 1) Create scenarios ----------------------------------------------------------
 
 library(r4ss)
 run<-"M0 base model"
-mod_path <- paste0(getwd(), "/Model/M0 base model/", sep="") 
+mod_path <- paste0(getwd(), "./Model/M0 base model/", sep="") ## CHANGE name
 
 dir.create(path= paste0(mod_path,"/forecast"), showWarnings = T, recursive = T)
 dir.create(path= paste0(mod_path,"/forecast/forecast files"), showWarnings = T, recursive = T)
@@ -32,20 +23,20 @@ dir.forecastTAC <-  paste0(mod_path,"/forecast/forecast files")
 file.copy(paste(mod_path, "forecast.ss", sep="/"),
           paste(dir.forecastTAC, "forecast.ss", sep="/"))
 
-## Read forecast from forecast folder
+## read forecast from forecast folder
 fore <- r4ss::SS_readforecast(file = file.path(dir.forecastTAC, "forecast.ss"),
                               verbose = FALSE)
 
 ## Look for values of apical F for intermediate year 2021 (report:14)
 replist <- SS_output(dir = mod_path, verbose=TRUE, printstats=TRUE) ## read
 
-## Option for avoid errors in max print lines for ss files 
+## option for avoid errors in max print lines for ss files 
 options(max.print=10000) # set max print lines
 getOption("max.print") # get max print lines
 
-# Int year ---------------------------------------------------------------------
+# int year ---------------------------------------------------------------------
 
-## Prepare intermediate year data (2021)
+## prepare intermediate year data (2021)
 dat=replist$exploitation
 dat=dat[-c(3,4,5,6)];head(dat)
 Naver=2 # number of average years-1
@@ -53,12 +44,12 @@ Nfor=fore$Nforecastyrs
 startyear=max(dat$Yr)-Nfor-Naver
 endyear=max(dat$Yr)-Nfor
 
-## Average of the last 3 years across seasons and fleets
+## average of the last 3 years across seasons and fleets
 data<-subset(dat,dat$Yr>=startyear & dat$Yr<=endyear)
 data<-data[,-1] # remove year column
 data_int<-aggregate(.~Seas,data=data,mean) 
 
-## Input intermediate year data
+## input intermediate year data
 dimen=dim(data_int)
 Year=rep(endyear+1,dimen[1]*(dimen[2]-1))
 fore_dat_int=data.frame(Year)
@@ -66,31 +57,25 @@ fore_dat_int$Seas=rep(1:4)
 fore_dat_int$Fleet=sort(rep(1:4,4))
 fore_dat_int$F=as.vector(as.matrix(data_int[,-1]))
 
-# Define Fmult ---------------------------------------------------------------- 
+# define Fmult ---------------------------------------------------------------- 
 
+# Flim	0.429	F with 50% probability of SSB>Blim (segreg without Btrigger)
 datmul=replist$exploitation
 head(subset(datmul, datmul$Yr>=2018),9)
 
-# Subset the dataset for the years 2018, 2019, and 2020
-(filtered_data <- subset(datmul, Yr %in% c(2018, 2019, 2020)))
-
-# Calculate the average of the F_std column, ignoring NA values
-average_F <- mean(filtered_data$F_std, na.rm = TRUE)
-
-# Print the result
-average_F
-
-# Average F last three years (18,19 y 20)
-denom <- average_F # 3 last years Fbar
-flim<-0.9 # plot yield ss		
-mulFlim<-flim/denom # multiplier to Flim
+# Last 3 years Fbar (automatic)
+fbar_years <- subset(datmul, datmul$Yr >= (endyear - 2) & datmul$Yr <= endyear & datmul$Seas == 1)
+(fbar_years$F_std) # F bar values for the last 3 years (2018-2020)
+(denom <- mean(fbar_years$F_std, na.rm = TRUE))
+flim<-1.2 # sacado de plot del yield de ss		
+mulFlim<-flim/denom # este es el multiplier para llegar a Flim.
 
 fmult=seq(0,mulFlim+0.05,by=0.05)# 
 Fmult_names=paste0("Fmult",fmult)
 l_fmult=length(fmult)
 aux=fore_dat_int
 
-## Create data for following forecast years using int year and Fmult
+## create data for following forecast years using int year and Fmult
 for (i in 1:l_fmult){
   fore_dat=fore_dat_int;aux_fore=fore_dat_int
   for(j in 2:Nfor){
@@ -105,15 +90,15 @@ for (i in 1:l_fmult){
   fore$ForeCatch<-fore_dat # input ForeCatch(orF) data
   
   ## write all forecast files/scenarios
-  r4ss::SS_writeforecast(fore, dir = dir.forecastTAC, file = paste0("/forecast",Fmult_names[i], ".ss"), 
+  r4ss::SS_writeforecast(fore, dir = dir.forecastTAC, file = paste0("forecast",Fmult_names[i], ".ss"), 
                          overwrite = TRUE, verbose = FALSE)
 }
 
-# b) Do forecast ------------------------------------------------------------------
+# 2) Do forecast ------------------------------------------------------------------
 
-## Run all forecast Fmult files at the same time
+## FIRST generate forecast scenarios/files with script "prepare forecast.R"
 
-## Load packages
+# load packages
 library(r4ss)
 library(ss3diags)
 library(readr)
@@ -123,13 +108,19 @@ library(tidyverse)
 library(parallel)
 library(doParallel)
 
+sessionInfo() # check for ss3diags_2.0.1, r4ss_1.43.0, kobe_2.2.0
+
 ## pre-register parallel function 
-registerDoParallel(2)
+registerDoParallel(6)
 
 ## set seed for consistency
 set.seed(1234)
 
+
 dir <- paste0(getwd(), "/Model", sep="") 
+# create subfolder arrays for naming
+#run = paste0("R",1:3) # number of models
+#run = "R0 base hessian" #select desired run or run
 tacs = paste0("Fmult",fmult) # TAC levels for forecast
 
 
@@ -160,38 +151,54 @@ for(i in 1:length(run)){
     # copy the right forecast file from the "forecast_TAC" folder
     file.copy(paste(dir.forecastTAC,  paste0("forecast",tacs[j], ".ss") , sep="/"),
               paste(dir.tacN, "forecast.ss", sep="/"))
-    # Edit "starter.ss" 
-    starter.file <- readLines(paste(dir.tacN, "/starter.ss", sep=""))
-    linen <- NULL
-    linen <- grep("# 0=use init values in control file; 1=use ss.par", starter.file)
-    starter.file[linen] <- paste0("1 # 0=use init values in control file; 1=use ss.par") # tells it to use the estimate parameters
-
-    linen <- grep("# Turn off estimation for parameters entering after this phase", starter.file)
-    starter.file[linen] <- paste0("0 # Turn off estimation for parameters entering after this phase")
-    write(starter.file, paste(dir.tacN, "/starter.ss", sep=""))
+    # Edit "starter.ss"
+    # Robust: use the r4ss parser (named fields), independent of the comment
+    # text / SS version. The old approach matched the line by its comment with
+    # grep() and broke when r4ss rewrote starter.ss in short format
+    # (#_last_estimation_phase), leaving estimation turned on.
+    starter <- r4ss::SS_readstarter(file = file.path(dir.tacN, "starter.ss"), verbose = FALSE)
+    starter$init_values_src       <- 1  # 1 = use ss.par (estimated values from base model)
+    starter$last_estimation_phase <- 0  # 0 = turn off estimation (project only, no re-estimation)
+    r4ss::SS_writestarter(starter, dir = dir.tacN, file = "starter.ss",
+                          overwrite = TRUE, verbose = FALSE)
     
   }
 }
 
 # run forecasts for each model
-mc.cores = 1 # set the number of cores as Nmodels x Nscenarios
+mc.cores = 1 
 
 for(i in 1:length(run)){
-   dir.runN.new <- paste0(mod_path,"/forecast")
-   mclapply(file.path(paste0(dir.runN.new,"/",tacs)), r4ss::run, extras = "-nohess", skipfinished = F, mc.cores=mc.cores)
+  dir.runN.new <- file.path(mod_path, "forecast") 
+  rutas_escenarios <- file.path(dir.runN.new, tacs)
+  
+  mclapply(rutas_escenarios, function(carpeta) {
+    r4ss::run(
+      dir = carpeta,
+      exe = "ss.exe", 
+      extras = "-nohess", 
+      skipfinished = FALSE,
+      verbose = FALSE
+    )
+  }, mc.cores = mc.cores)
 }
 
 r4ss::SS_readforecast(file = file.path(paste(mod_path,"/forecast/Fmult0.1", sep=""), "forecast.ss"),
                       verbose = FALSE)
 
-# c) Output table --------------------------------------------------------------
+# 3) Output table --------------------------------------------------------------
 
+# Table (forecast)
+
+#rm(list=ls()) ## Clean environment
 library(r4ss) 
 library(icesAdvice)
 
 # Years
+
 year_inter=2021
 
+#run="R0 base hessian"
 # Catches, recruitment, F, SSB
 mod_path=paste0(paste0(getwd(), "/Model/", sep="") , run, sep="") # mod_path
 fore_path <-  paste0(mod_path,"/forecast")
@@ -200,13 +207,34 @@ fore_path <-  paste0(mod_path,"/forecast")
 tabledir_fore<- paste(fore_path, "/table", sep="")
 dir.create(tabledir_fore)
 
+# Safety check: re-run any scenario whose Report.sso was truncated -------------
+# An SS run can leave an incomplete Report.sso (file cut mid-write at extreme F).
+# A truncated report is clearly smaller than the rest; detect it by size and
+# re-run only those folders so SSgetoutput does not crash.
+fore_dirs <- file.path(fore_path, Fmult_names)
+reps      <- file.path(fore_dirs, "Report.sso")
+sizes     <- file.size(reps)
+typical   <- median(sizes, na.rm = TRUE)
+bad       <- fore_dirs[is.na(sizes) | sizes < 0.95 * typical]  # >5% smaller = suspect
+
+if (length(bad) > 0) {
+  message("Incomplete Report.sso detected -> re-running: ",
+          paste(basename(bad), collapse = ", "))
+  for (d in bad) {
+    file.copy("C:/SS exe/ss.exe", file.path(d, "ss.exe"), overwrite = TRUE)
+    r4ss::run(dir = d, exe = "ss.exe", extras = "-nohess",
+                        skipfinished = FALSE, verbose = FALSE)
+  }
+}
+
 retroModels <- SSgetoutput(dirvec=file.path(fore_path,
                                             Fmult_names))
+
 retroSummary <- SSsummarize(retroModels)
 
 # SSB -------------------------------------------------------------------------
 
-SSB <- as.data.frame(retroSummary[16])
+SSB <- as.data.frame(retroSummary["SpawnBio"])
 
 Table_Inter=data.frame(matrix(0,ncol=6,nrow=1))
 colnames(Table_Inter)=c(paste("SSB",year_inter+1,sep=""),"F","Rec","Catches", "Landings","Discards")
@@ -227,8 +255,9 @@ Table_fmult[,1]=unlist(aux)
 
 
 # F ----------------------------------------------------------------------------
+# Note that F is from intermediate year
 
-Fvalue <- as.data.frame(retroSummary[29])
+Fvalue <- as.data.frame(retroSummary["Fvalue"])
 
 ind=which((year_inter)==Fvalue$Fvalue.Yr)
 Table_Inter[,2]=Fvalue[ind,1]
@@ -238,9 +267,13 @@ aux=Fvalue[ind,-c(ncol-1,ncol)]
 colnames(aux)=NULL
 Table_fmult[,2]=unlist(aux)
 
-# Rec -------------------------------------------------------------------------
+# Flim es distinto a Fcrash, mirar defs.
+# Flim es F que da en equilibrio un 50% prob de que SSB este por encima de Blim
 
-Recr <- as.data.frame(retroSummary[37])
+# Rec -------------------------------------------------------------------------
+# Note constant recruitment!
+
+Recr <- as.data.frame(retroSummary["recruits"])
 
 ind=which((year_inter)==Recr$recruits.Yr)
 Table_Inter[,3]=Recr[ind,1]
@@ -316,3 +349,4 @@ Table_fmult<-cbind(Table_fmult, Fmsy_vector)
 
 write.csv(Table_Inter, paste(tabledir_fore, "/table intermediate year.csv", sep=""))
 write.csv(Table_fmult, paste(tabledir_fore, "/table Fmult.csv", sep=""))
+
